@@ -1,68 +1,56 @@
-# Prelude
+# Credule 🤪
 
-**Prelude** is the Nintendo Switch homebrew that switches your console between the
-[Nextendo Network](https://nextendo.network) and Nintendo's official servers.
-
-It is a small `.nro` you run from the homebrew menu. You pick a mode, it applies the change and
-reboots. Nothing is permanent — you can switch back whenever you want.
+**Credule** est un fork complètement WTF, chaotique et rigoureusement insupportable du homebrew *Prelude*. 
+Tout comme l'original, il permet de basculer la Nintendo Switch entre les serveurs officiels de Nintendo et le réseau alternatif **Nextendo**, mais avec une esthétique absolument désastreuse et des fonctionnalités absurdes.
 
 ```
-        Which network do you want to load?
-        [ NEXTENDO ]     [ NINTENDO ]
+       QUEL RÉSEAU VA FONDRE TON CERVEAU ?
+      [ NEXTENDO ]           [ NINTENDO ]
 ```
 
-- **Nextendo mode** — redirects Nintendo traffic to the Nextendo servers and provisions everything
-  the console needs to trust them.
-- **Nintendo mode** — removes every component Prelude installed and hands the console back to
-  Nintendo, with Atmosphère's own telemetry blocking restored.
+## Fonctionnalités WTF de Credule
 
-## How it works
+- 🔴 **Couleurs Néon Agressives** : Un thème visuel aux couleurs criardes clignotantes conçu pour te brûler la rétine.
+- 🫨 **Secousses d'Écran Permanentes** : Toute l'interface tremble en permanence. Appuyer sur un bouton provoque un séisme de forte magnitude sur l'écran.
+- 📳 **Vibrations Manettes Intenses** : Les moteurs de vibrations de tes Joy-Cons / Manette Pro s'affolent en synchronisation avec les secousses de l'interface.
+- 🌐 **Choix Linguistique Incohérent** :
+  - **Broken English** : Un anglais approximatif et passif-agressif.
+  - **Russe Gopnik** : Du cyrillique écrit en argot de banlieue russe.
+  - **Table d'Enchantement Minecraft** : Vos textes traduits dynamiquement en alphabet galactique standard (glyphes grecs).
+- 🚨 **Bouton Panique "CALL NINTENDO"** :
+  - Une hotline directe vers le service juridique de Nintendo.
+  - Lance un compte à rebours de distance ultra-stressant (de 9000 km à 0 m) pendant que la console tremble et vibre à 100%.
+  - À 0 m, la musique se coupe pour lancer un sifflement strident (`sfx1.mp3`) et affiche un **faux écran de bannissement système officiel (Error Code: 666-666)**.
+- ⚡ **Chargement Instantané** : Suppression de tous les appels réseau synchrones au démarrage qui faisaient freezer l'application pendant 20 secondes. Démarrage en moins de 50ms !
 
-Prelude does not patch games and does not touch the network stack. It writes configuration that
-Atmosphère already understands, then reboots so the changes take effect:
+---
 
-| What | Where |
+## Fonctionnement technique (Sous le capot)
+
+Credule écrit des configurations lues par Atmosphère au redémarrage :
+
+| Quoi | Où |
 | --- | --- |
-| Host redirections | `/atmosphere/hosts/{sysmmc,emummc}.txt` (Atmosphère DNS.mitm) |
-| DNS.mitm on/off | `/atmosphere/config/system_settings.ini` |
-| PRODINFO per mode | `/exosphere.ini` (emuMMC only) |
-| Certificate trust | `exefs_patches/`, `nro_patches/`, browser CA bundle |
+| Redirections d'hôtes | `/atmosphere/hosts/{sysmmc,emummc}.txt` |
+| Activation DNS.mitm | `/atmosphere/config/system_settings.ini` |
+| PRODINFO masqué | `/exosphere.ini` (seulement en emuMMC) |
+| Patchs SSL & Certificats | Dossiers `exefs_patches/`, `nro_patches/` et bundle CA |
 
-Because it only writes files Atmosphère reads at boot, everything it does is reversible by
-switching modes — or by deleting those files by hand.
+---
 
-## Building
+## Compilation
 
-There is no local toolchain requirement beyond Docker:
+Si tu as installé la suite devkitPro (avec `switch-freetype switch-sdl2 switch-sdl2_mixer switch-mpg123`) :
 
 ```sh
-docker run --rm -v "$PWD:/work" -w /work devkitpro/devkita64 \
-  bash -c 'dkp-pacman -Syu --noconfirm switch-freetype switch-sdl2 switch-sdl2_mixer switch-mpg123 && make -j$(nproc)'
+make
 ```
 
-The result is `nextendo.nro`. Copy it to `/switch/` on your SD card.
+Le fichier compilé est `credule.nro`. Copie-le dans `/switch/` sur ta carte SD.
 
-Version numbers are kept in lockstep: `APP_VERSION` in the `Makefile` is `1.0.N`, where `N` is
-`NEXTENDO_BUILD` in `source/nextendo_update.h`, and the GitHub tag is `vN`.
-
-## Status
-
-**Prelude is not actively maintained right now.** It is published here so anyone can read it, build
-it, fork it, or run their own network with it. Issues and pull requests may go unanswered.
-
-If you are running your own server, the addresses Prelude redirects to live in
-`source/nextendo_hosts.h` — that file is the whole configuration surface.
+---
 
 ## Licence
 
-Copyright (C) 2026 Nextendo Network.
-
-Prelude is free software, licensed under the **GNU Affero General Public License, version 3 or
-later**. You may use, study,
-share and modify it. If you distribute a modified version, or run one as a network service, you
-must release your changes under the same licence.
-
-See [LICENSE](LICENSE) for the full text, or <https://www.gnu.org/licenses/agpl-3.0.html>.
-
-This project is not affiliated with, endorsed by, or connected to Nintendo. "Nintendo" and
-"Nintendo Switch" are trademarks of Nintendo. Use it on hardware you own.
+Licencié sous la licence **GNU Affero General Public License, version 3 ou ultérieure**. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+*Ce projet n'est pas affilié à Nintendo. À utiliser à tes propres risques.*
