@@ -356,7 +356,7 @@ void ui_draw_picker(int selection, int current, int focus, const char *status, i
     }
 
     drawCF(b, st, s_reg, FB_W / 2 + shX, FB_H - 50 + shY, 21, packColor(C_SUBTLE),
-           focus == FOCUS_CALL ? "A: CALL NOW       < >: change choice       B: quit" :
+           focus == FOCUS_CALL ? "A: CALL NOW       L: Select BGM       B: quit" :
            (focus == FOCUS_S2 ? lang_str(STR_HELP_S2) : lang_str(STR_HELP_MODE)));
     if (status && status[0])
         drawCF(b, st, s_semi, FB_W / 2 + shX, FB_H - 22 + shY, 23, packColor(C_BLUE), status);

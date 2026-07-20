@@ -31,10 +31,10 @@ static const char *s_strings[STR_COUNT][2] = {
                                  "Скачать читы на Сплат 2 и заказать пиццу прямо в консоль." },
 
     // --- Help lines ---
-    [STR_HELP_MODE]          = { "A: Do the thing       < >: Wiggle       B: Escape",
-                                 "А: Жмяк       < >: Туда-сюда       B: Свалить" },
-    [STR_HELP_S2]            = { "A: Order Pizza       < >: Wiggle       B: Escape",
-                                 "А: Взять пиццу       < >: Выбор       B: Назад" },
+    [STR_HELP_MODE]          = { "A: Do the thing       L: Select BGM       B: Escape",
+                                 "А: Жмяк       L: Выбор BGM       B: Свалить" },
+    [STR_HELP_S2]            = { "A: Order Pizza       L: Select BGM       B: Escape",
+                                 "А: Взять пиццу       L: Выбор BGM       B: Назад" },
 
     // --- Update banner ---
     [STR_UPDATE_BANNER]      = { "CRITICAL MELTDOWN (v%d) - PRESS Y OR IT EXPLODES",
