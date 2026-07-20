@@ -47,6 +47,12 @@ static void load_bgm_choice(void) {
     }
 }
 
+void audio_halt(void) {
+    if (!s_audioOpen) return;
+    Mix_HaltMusic();
+    if (s_music) { Mix_FreeMusic(s_music); s_music = NULL; }
+}
+
 static void save_bgm_choice(const char *name) {
     mkdir("sdmc:/switch", 0777);
     FILE *f = fopen("sdmc:/switch/credule_bgm.txt", "w");
@@ -58,63 +64,74 @@ static void save_bgm_choice(const char *name) {
 
 bool audio_init(void) {
     SDL_SetMainReady();
-    if (SDL_Init(SDL_INIT_AUDIO) != 0) return false;            // audio seul (pas de video)
+    if (SDL_Init(SDL_INIT_AUDIO) != 0) return false;
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 4096) != 0) {
         SDL_QuitSubSystem(SDL_INIT_AUDIO);
         return false;
     }
     s_audioOpen = true;
-    Mix_Init(MIX_INIT_MP3);                                     // active le decodeur MP3
-    
+    Mix_Init(MIX_INIT_MP3);
+
     load_bgm_choice();
-    char path[128];
-    snprintf(path, sizeof(path), "romfs:/%s", g_current_bgm);
+    char path[256];
+    // Si le choix sauvegardé est un fichier téléchargé sur SD (préfixe "sd:")
+    if (strncmp(g_current_bgm, "sd:", 3) == 0) {
+        snprintf(path, sizeof(path), "sdmc:/switch/credule_music/%s", g_current_bgm + 3);
+    } else {
+        snprintf(path, sizeof(path), "romfs:/%s", g_current_bgm);
+    }
     s_music = Mix_LoadMUS(path);
     if (!s_music) {
-        // Fallback to default BGM
+        // Fallback to default romfs BGM
         s_music = Mix_LoadMUS("romfs:/default-From-Tiktok.mp3");
-        if (s_music) {
-            strcpy(g_current_bgm, "default-From-Tiktok.mp3");
-        }
+        if (s_music) strcpy(g_current_bgm, "default-From-Tiktok.mp3");
     }
-    if (!s_music) return false;                                 // pas de musique -> on continue
-    Mix_VolumeMusic(MIX_MAX_VOLUME);                            // 100 % volume WTF
-    Mix_PlayMusic(s_music, -1);                                 // -1 = boucle infinie
+    if (!s_music) return false;
+    Mix_VolumeMusic(MIX_MAX_VOLUME);
+    Mix_PlayMusic(s_music, -1); // -1 = boucle infinie
     return true;
 }
 
 void audio_play_bgm_file(const char *filename) {
     if (!s_audioOpen) return;
-    if (s_music) {
-        Mix_HaltMusic();
-        Mix_FreeMusic(s_music);
-        s_music = NULL;
-    }
+    if (s_music) { Mix_HaltMusic(); Mix_FreeMusic(s_music); s_music = NULL; }
     char path[128];
     snprintf(path, sizeof(path), "romfs:/%s", filename);
     s_music = Mix_LoadMUS(path);
     if (s_music) {
         Mix_VolumeMusic(MIX_MAX_VOLUME);
-        Mix_PlayMusic(s_music, -1);
+        Mix_PlayMusic(s_music, -1); // boucle infinie
         strncpy(g_current_bgm, filename, sizeof(g_current_bgm) - 1);
         g_current_bgm[sizeof(g_current_bgm) - 1] = '\0';
         save_bgm_choice(filename);
     }
 }
 
+// Joue un fichier MP3 déjà téléchargé sur la SD en boucle infinie
+void audio_play_bgm_sd(const char *sd_filename) {
+    if (!s_audioOpen) return;
+    if (s_music) { Mix_HaltMusic(); Mix_FreeMusic(s_music); s_music = NULL; }
+    char path[256];
+    snprintf(path, sizeof(path), "sdmc:/switch/credule_music/%s", sd_filename);
+    s_music = Mix_LoadMUS(path);
+    if (s_music) {
+        Mix_VolumeMusic(MIX_MAX_VOLUME);
+        Mix_PlayMusic(s_music, -1); // boucle infinie
+        // Sauvegarde avec le préfixe "sd:" pour le rechargement au prochain boot
+        snprintf(g_current_bgm, sizeof(g_current_bgm), "sd:%s", sd_filename);
+        save_bgm_choice(g_current_bgm);
+    }
+}
+
 void audio_play_mem(unsigned char *buf, size_t size) {
     if (!s_audioOpen) return;
-    if (s_music) {
-        Mix_HaltMusic();
-        Mix_FreeMusic(s_music);
-        s_music = NULL;
-    }
+    if (s_music) { Mix_HaltMusic(); Mix_FreeMusic(s_music); s_music = NULL; }
     SDL_RWops *rw = SDL_RWFromMem(buf, size);
     if (rw) {
         s_music = Mix_LoadMUS_RW(rw, 1);
         if (s_music) {
             Mix_VolumeMusic(MIX_MAX_VOLUME);
-            Mix_PlayMusic(s_music, 1); // Play once (for PurpleMusic streaming)
+            Mix_PlayMusic(s_music, -1); // boucle infinie
         }
     }
 }

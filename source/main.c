@@ -441,22 +441,50 @@ int main(int argc, char **argv) {
             g_major_shake = 15;
         }
 
-        // Background audio monitor and auto-play
+        // Background audio monitor: quand le téléchargement est terminé, sauvegarder sur SD et jouer en boucle
         pthread_mutex_lock(&audio_mutex);
         if (is_downloading && download_finished_ok) {
-            audio_play_mem(stream_buffer, stream_buffer_size);
-            playback_start_ticks = SDL_GetTicks();
-            is_downloading = 0;
-            download_finished_ok = 0;
-        }
-        pthread_mutex_unlock(&audio_mutex);
-
-        // Auto-play next online track
-        if (playing_song_idx != -1 && !audio_is_playing() && !audio_is_paused() && !is_downloading) {
-            if (playing_song_idx < total_songs - 1) {
-                playing_song_idx++;
-                start_playback(playing_song_idx);
+            // Écriture du MP3 sur la carte SD
+            mkdir("sdmc:/switch", 0777);
+            mkdir("sdmc:/switch/credule_music", 0777);
+            char sd_filename[128];
+            // Construire un nom de fichier à partir du titre de la chanson
+            if (playing_song_idx >= 0 && playing_song_idx < total_songs) {
+                snprintf(sd_filename, sizeof(sd_filename), "%s.mp3", playlist[playing_song_idx].title);
+                // Remplacer les caractères interdits dans les noms de fichier
+                for (int ci = 0; sd_filename[ci]; ci++) {
+                    char c = sd_filename[ci];
+                    if (c == '/' || c == '\\' || c == ':' || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|')
+                        sd_filename[ci] = '_';
+                }
+            } else {
+                snprintf(sd_filename, sizeof(sd_filename), "online_track.mp3");
             }
+            char sd_path[256];
+            snprintf(sd_path, sizeof(sd_path), "sdmc:/switch/credule_music/%s", sd_filename);
+            FILE *fout = fopen(sd_path, "wb");
+            if (fout) {
+                fwrite(stream_buffer, 1, stream_buffer_size, fout);
+                fclose(fout);
+                // Libérer le buffer et jouer depuis SD en boucle
+                free(stream_buffer);
+                stream_buffer = NULL;
+                stream_buffer_size = 0;
+                download_finished_ok = 0;
+                is_downloading = 0;
+                pthread_mutex_unlock(&audio_mutex);
+                audio_play_bgm_sd(sd_filename); // boucle infinie + sauvegarde
+                snprintf(status, sizeof(status), "Saved & playing: %s", sd_filename);
+            } else {
+                // Échec d'écriture : jouer depuis la mémoire quand même
+                audio_play_mem(stream_buffer, stream_buffer_size);
+                is_downloading = 0;
+                download_finished_ok = 0;
+                pthread_mutex_unlock(&audio_mutex);
+            }
+            playback_start_ticks = SDL_GetTicks();
+        } else {
+            pthread_mutex_unlock(&audio_mutex);
         }
 
         // BGM status update
@@ -663,6 +691,8 @@ int main(int argc, char **argv) {
 
         } else if (screen == SCREEN_NINTENDO_COMING) {
             g_major_shake = 20;
+            // Stopper la musique à la première frame de cet écran
+            if (audio_is_playing()) audio_halt();
             if (!nintendo_in_meters) {
                 // Decrement km slower
                 nintendo_distance -= 47;
@@ -682,7 +712,8 @@ int main(int argc, char **argv) {
             svcSleepThread(16666666ULL);
 
         } else if (screen == SCREEN_FAKE_BAN) {
-            g_major_shake = 0; // stop vibration/shaking
+            g_major_shake = 0;
+            audio_halt(); // stopper la musique sur le faux écran de ban
             if (k) {
                 break; // Exit app on any button press
             }

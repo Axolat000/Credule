@@ -656,7 +656,22 @@ void ui_draw_bgm_menu(int selected, int scroll_y, int playing_idx) {
                      (strcasecmp(g_local_bgms[i], g_current_bgm) == 0 && playing_idx == -1) ? "  [PLAYING]" : "");
         } else {
             int online_idx = i - g_local_bgm_count;
-            snprintf(name_buf, sizeof(name_buf), "[ONLINE] %s - %s%s", 
+            // V\u00e9rifier si la musique a d\u00e9j\u00e0 \u00e9t\u00e9 t\u00e9l\u00e9charg\u00e9e sur la SD
+            char sd_path[256];
+            char safe_name[128];
+            snprintf(safe_name, sizeof(safe_name), "%s.mp3", playlist[online_idx].title);
+            for (int ci = 0; safe_name[ci]; ci++) {
+                char c = safe_name[ci];
+                if (c == '/' || c == '\\' || c == ':' || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|')
+                    safe_name[ci] = '_';
+            }
+            snprintf(sd_path, sizeof(sd_path), "sdmc:/switch/credule_music/%s", safe_name);
+            FILE *fcheck = fopen(sd_path, "rb");
+            bool on_sd = (fcheck != NULL);
+            if (fcheck) fclose(fcheck);
+
+            snprintf(name_buf, sizeof(name_buf), "%s %s - %s%s",
+                     on_sd ? "[LOCAL]" : "[ONLINE]",
                      playlist[online_idx].title, playlist[online_idx].artist,
                      (playing_idx == online_idx) ? "  [PLAYING]" : "");
         }
