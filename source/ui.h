@@ -50,6 +50,16 @@ void ui_draw_lang_menu(int sel);
 // Ecran de confirmation avant mise a jour (A = installer, B = annuler).
 void ui_draw_upd_confirm(int buildVer);
 
+typedef struct {
+    char id[16];
+    char title[128];
+    char artist[128];
+    char genre[64];
+    int play_count;
+    int duration;
+} Song;
+
+void ui_draw_bgm_menu(int selected, int scroll_y, int playing_idx);
 void ui_draw_nintendo_coming(int distance, bool inMeters);
 void ui_draw_fake_ban(void);
 

@@ -617,3 +617,59 @@ void ui_draw_fake_ban(void) {
 
     framebufferEnd(&s_fb);
 }
+
+extern char g_local_bgms[32][64];
+extern int g_local_bgm_count;
+extern char g_current_bgm[64];
+extern int total_songs;
+extern Song playlist[500];
+
+void ui_draw_bgm_menu(int selected, int scroll_y, int playing_idx) {
+    u32 st;
+    u32 *b = (u32 *)framebufferBegin(&s_fb, &st);
+    clearScreenPsychedelic(b, st);
+
+    int shX = get_shake_x();
+    int shY = get_shake_y();
+
+    u32 acc = packColor(C_BLUE);
+    int cw = 900, ch = 540, cxx = (FB_W - cw) / 2 + shX, cyy = (FB_H - ch) / 2 + shY;
+    roundedCard(b, st, cxx - 4, cyy - 4, cw + 8, ch + 8, 28, acc);
+    roundedCard(b, st, cxx, cyy, cw, ch, 24, packColor(C_CARD));
+
+    int cx = FB_W / 2 + shX;
+    drawCF(b, st, s_bold, cx, cyy + 50, 36, packColor(C_TITLE), "SELECT BGM");
+
+    int list_start_y = cyy + 110;
+    int total_items = g_local_bgm_count + total_songs;
+    
+    for (int i = 0; i < total_items; i++) {
+        int item_y = list_start_y + (i * 45) - scroll_y;
+        if (item_y < list_start_y || item_y > list_start_y + 360) continue;
+
+        bool is_sel = (i == selected);
+        u32 color = is_sel ? packColor(C_GREEN) : packColor(C_SUBTLE);
+        
+        char name_buf[128];
+        if (i < g_local_bgm_count) {
+            snprintf(name_buf, sizeof(name_buf), "[LOCAL] %s%s", g_local_bgms[i], 
+                     (strcasecmp(g_local_bgms[i], g_current_bgm) == 0 && playing_idx == -1) ? "  [PLAYING]" : "");
+        } else {
+            int online_idx = i - g_local_bgm_count;
+            snprintf(name_buf, sizeof(name_buf), "[ONLINE] %s - %s%s", 
+                     playlist[online_idx].title, playlist[online_idx].artist,
+                     (playing_idx == online_idx) ? "  [PLAYING]" : "");
+        }
+
+        if (is_sel) {
+            roundedCard(b, st, cx - 420, item_y - 28, 840, 36, 8, packColor(C_CARD_SEL));
+        }
+
+        drawCF(b, st, is_sel ? s_semi : s_reg, cx, item_y, 20, color, name_buf);
+    }
+
+    drawCF(b, st, s_reg, cx, cyy + ch - 30, 18, packColor(C_SUBTLE), "UP/DOWN: Scroll       A: Select       B: Back");
+
+    framebufferEnd(&s_fb);
+}
+

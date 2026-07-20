@@ -22,7 +22,14 @@
 #define AUDIO_H
 #include <switch.h>
 
+extern char g_current_bgm[64];
 bool audio_init(void);   // demarre la BGM en boucle (true si lancee)
+void audio_play_bgm_file(const char *filename);
+void audio_play_mem(unsigned char *buf, size_t size);
+void audio_pause(void);
+void audio_resume(void);
+bool audio_is_paused(void);
+bool audio_is_playing(void);
 void audio_play_sfx(void); // joue le sfx1.mp3 de panique
 void audio_exit(void);   // arrete + libere
 
