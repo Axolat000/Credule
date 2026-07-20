@@ -1,56 +1,56 @@
 # Credule 🤪
 
-**Credule** est un fork complètement WTF, chaotique et rigoureusement insupportable du homebrew *Prelude*. 
-Tout comme l'original, il permet de basculer la Nintendo Switch entre les serveurs officiels de Nintendo et le réseau alternatif **Nextendo**, mais avec une esthétique absolument désastreuse et des fonctionnalités absurdes.
+**Credule** is a completely WTF, chaotic, and downright obnoxious Nintendo Switch homebrew fork of the original *Prelude*. 
+Just like the original, it lets you switch your console between Nintendo's official servers and the alternative **Nextendo** network, but it does so in the most annoying way possible.
 
 ```
-       QUEL RÉSEAU VA FONDRE TON CERVEAU ?
+       WHICH NETWORK WILL MELT YOUR BRAIN?
       [ NEXTENDO ]           [ NINTENDO ]
 ```
 
-## Fonctionnalités WTF de Credule
+## WTF Features
 
-- 🔴 **Couleurs Néon Agressives** : Un thème visuel aux couleurs criardes clignotantes conçu pour te brûler la rétine.
-- 🫨 **Secousses d'Écran Permanentes** : Toute l'interface tremble en permanence. Appuyer sur un bouton provoque un séisme de forte magnitude sur l'écran.
-- 📳 **Vibrations Manettes Intenses** : Les moteurs de vibrations de tes Joy-Cons / Manette Pro s'affolent en synchronisation avec les secousses de l'interface.
-- 🌐 **Choix Linguistique Incohérent** :
-  - **Broken English** : Un anglais approximatif et passif-agressif.
-  - **Russe Gopnik** : Du cyrillique écrit en argot de banlieue russe.
-  - **Table d'Enchantement Minecraft** : Vos textes traduits dynamiquement en alphabet galactique standard (glyphes grecs).
-- 🚨 **Bouton Panique "CALL NINTENDO"** :
-  - Une hotline directe vers le service juridique de Nintendo.
-  - Lance un compte à rebours de distance ultra-stressant (de 9000 km à 0 m) pendant que la console tremble et vibre à 100%.
-  - À 0 m, la musique se coupe pour lancer un sifflement strident (`sfx1.mp3`) et affiche un **faux écran de bannissement système officiel (Error Code: 666-666)**.
-- ⚡ **Chargement Instantané** : Suppression de tous les appels réseau synchrones au démarrage qui faisaient freezer l'application pendant 20 secondes. Démarrage en moins de 50ms !
+- 🔴 **Aggressive Neon Colors**: An eye-burning visual theme featuring flashing neon colors designed to fry your retinas.
+- 🫨 **Constant Screen Shaking**: The entire UI shakes continuously. Pressing any button triggers a high-magnitude earthquake on the screen.
+- 📳 **Violent Controller Rumble**: Your Joy-Cons / Pro Controller rumble motors go wild in sync with the screen shakes.
+- 🌐 **Incoherent Language Options**:
+  - **Broken English**: Approximative, passive-aggressive English translation.
+  - **Gopnik Russian**: Cyrillic translation using Gopnik street slang.
+  - **Minecraft Enchanting Table**: Texts dynamically translated into the Standard Galactic Alphabet (Greek glyphs).
+- 🚨 **"CALL NINTENDO" Panic Button**:
+  - A direct hotline to Nintendo's Legal Department.
+  - Triggers an ultra-stressful distance countdown (from 9000 km down to 0 m) while the console shakes and rumbles at 100% power.
+  - At 0 m, the background music cuts out to play a screeching sound effect (`sfx1.mp3`) and displays a **perfectly realistic fake system ban screen (Error Code: 666-666)**.
+- ⚡ **Instant Boot**: Removed all annoying synchronous network checks on startup that used to freeze the application for 20 seconds. Credule now boots in under 50ms!
 
 ---
 
-## Fonctionnement technique (Sous le capot)
+## Technical Details
 
-Credule écrit des configurations lues par Atmosphère au redémarrage :
+Credule writes configuration files that Atmosphère reads at boot:
 
-| Quoi | Où |
+| What | Where |
 | --- | --- |
-| Redirections d'hôtes | `/atmosphere/hosts/{sysmmc,emummc}.txt` |
-| Activation DNS.mitm | `/atmosphere/config/system_settings.ini` |
-| PRODINFO masqué | `/exosphere.ini` (seulement en emuMMC) |
-| Patchs SSL & Certificats | Dossiers `exefs_patches/`, `nro_patches/` et bundle CA |
+| Host redirections | `/atmosphere/hosts/{sysmmc,emummc}.txt` |
+| DNS.mitm toggle | `/atmosphere/config/system_settings.ini` |
+| Hidden PRODINFO | `/exosphere.ini` (emuMMC only) |
+| SSL Patches & Certificates | `exefs_patches/`, `nro_patches/` folders and browser CA bundle |
 
 ---
 
-## Compilation
+## Building
 
-Si tu as installé la suite devkitPro (avec `switch-freetype switch-sdl2 switch-sdl2_mixer switch-mpg123`) :
+If you have devkitPro installed (with `switch-freetype switch-sdl2 switch-sdl2_mixer switch-mpg123`):
 
 ```sh
 make
 ```
 
-Le fichier compilé est `credule.nro`. Copie-le dans `/switch/` sur ta carte SD.
+The output file is `credule.nro`. Copy it to `/switch/` on your SD card.
 
 ---
 
-## Licence
+## License
 
-Licencié sous la licence **GNU Affero General Public License, version 3 ou ultérieure**. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
-*Ce projet n'est pas affilié à Nintendo. À utiliser à tes propres risques.*
+Licensed under the **GNU Affero General Public License, version 3 or later**. See [LICENSE](LICENSE) for more details.
+*This project is not affiliated with Nintendo. Use at your own risk.*
