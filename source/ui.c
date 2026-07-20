@@ -356,7 +356,7 @@ void ui_draw_picker(int selection, int current, int focus, const char *status, i
     }
 
     drawCF(b, st, s_reg, FB_W / 2 + shX, FB_H - 50 + shY, 21, packColor(C_SUBTLE),
-           focus == FOCUS_CALL ? "A: CALL NOW       L: Select BGM       B: quit" :
+           focus == FOCUS_CALL ? "A: CALL NOW       L: Music       B: quit" :
            (focus == FOCUS_S2 ? lang_str(STR_HELP_S2) : lang_str(STR_HELP_MODE)));
     if (status && status[0])
         drawCF(b, st, s_semi, FB_W / 2 + shX, FB_H - 22 + shY, 23, packColor(C_BLUE), status);
@@ -638,7 +638,7 @@ void ui_draw_bgm_menu(int selected, int scroll_y, int playing_idx) {
     roundedCard(b, st, cxx, cyy, cw, ch, 24, packColor(C_CARD));
 
     int cx = FB_W / 2 + shX;
-    drawCF(b, st, s_bold, cx, cyy + 50, 36, packColor(C_TITLE), "SELECT BGM");
+    drawCF(b, st, s_bold, cx, cyy + 50, 36, packColor(C_TITLE), "SELECT MUSIC");
 
     int list_start_y = cyy + 110;
     int total_items = g_local_bgm_count + total_songs;

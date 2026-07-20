@@ -461,9 +461,9 @@ int main(int argc, char **argv) {
 
         // BGM status update
         if (is_downloading) {
-            snprintf(status, sizeof(status), "Caching online BGM... (%d KB)", (int)(stream_buffer_size / 1024));
+            snprintf(status, sizeof(status), "Caching online Music... (%d KB)", (int)(stream_buffer_size / 1024));
         } else if (download_thread_active) {
-            snprintf(status, sizeof(status), "Loading online BGM...");
+            snprintf(status, sizeof(status), "Loading online Music...");
         } else if (audio_is_playing() && playing_song_idx != -1) {
             snprintf(status, sizeof(status), "Playing: %s", playlist[playing_song_idx].title);
         } else {
@@ -492,7 +492,7 @@ int main(int argc, char **argv) {
                 if (k & (HidNpadButton_B | HidNpadButton_Plus)) break;
                 if (k & HidNpadButton_R) { screen = SCREEN_LANG; langSel = g_lang; }
                 if (k & HidNpadButton_L) {
-                    ui_draw_progress("Fetching BGM list...");
+                    ui_draw_progress("Fetching Music list...");
                     svcSleepThread(100000000ULL);
                     scan_local_bgms();
                     fetch_playlist();
