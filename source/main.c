@@ -691,8 +691,6 @@ int main(int argc, char **argv) {
 
         } else if (screen == SCREEN_NINTENDO_COMING) {
             g_major_shake = 20;
-            // Stopper la musique à la première frame de cet écran
-            if (audio_is_playing()) audio_halt();
             if (!nintendo_in_meters) {
                 // Decrement km slower
                 nintendo_distance -= 47;
@@ -704,7 +702,7 @@ int main(int argc, char **argv) {
                 // Decrement meters slower
                 nintendo_distance -= 5;
                 if (nintendo_distance <= 0) {
-                    audio_play_sfx();
+                    audio_play_sfx(); // coupe la musique et lance la sirène
                     screen = SCREEN_FAKE_BAN;
                 }
             }
@@ -713,7 +711,7 @@ int main(int argc, char **argv) {
 
         } else if (screen == SCREEN_FAKE_BAN) {
             g_major_shake = 0;
-            audio_halt(); // stopper la musique sur le faux écran de ban
+            // La sirène (sfx1.mp3) est déjà lancée par audio_play_sfx() à la transition
             if (k) {
                 break; // Exit app on any button press
             }
