@@ -171,6 +171,26 @@ void audio_play_sfx(void) {
     }
 }
 
+void audio_play_rickroll(void) {
+    if (!s_audioOpen) return;
+    if (s_music) { Mix_HaltMusic(); Mix_FreeMusic(s_music); s_music = NULL; }
+    if (s_sfx) { Mix_HaltMusic(); Mix_FreeMusic(s_sfx); s_sfx = NULL; }
+    s_music = Mix_LoadMUS("romfs:/RickRoll.mp3");
+    if (s_music) {
+        Mix_VolumeMusic(MIX_MAX_VOLUME);
+        Mix_PlayMusic(s_music, -1);
+    }
+}
+
+void audio_resume_current_bgm(void) {
+    if (!s_audioOpen) return;
+    if (strncmp(g_current_bgm, "sd:", 3) == 0) {
+        audio_play_bgm_sd(g_current_bgm + 3);
+    } else {
+        audio_play_bgm_file(g_current_bgm);
+    }
+}
+
 void audio_exit(void) {
     if (s_music) { Mix_HaltMusic(); Mix_FreeMusic(s_music); s_music = NULL; }
     if (s_sfx) { Mix_HaltMusic(); Mix_FreeMusic(s_sfx); s_sfx = NULL; }

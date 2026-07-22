@@ -49,11 +49,14 @@ enum {
     SCREEN_PICKER, SCREEN_S2_INFO, SCREEN_S2_PROGRESS, SCREEN_S2_RESULT,
     SCREEN_UPD_CONFIRM, SCREEN_UPD_PROGRESS, SCREEN_UPD_RESULT,
     SCREEN_LANG, SCREEN_NINTENDO_COMING, SCREEN_FAKE_BAN,
-    SCREEN_BGM_MENU, SCREEN_PURPLE_MUSIC
+    SCREEN_BGM_MENU, SCREEN_PURPLE_MUSIC,
+    SCREEN_PLUS18_WARN1, SCREEN_PLUS18_WARN2, SCREEN_PLUS18_KONAMI, SCREEN_RICKROLL
 };
 
-static HidVibrationDeviceHandle s_vibHandles[2];
+static HidVibrationDeviceHandle s_vibHandles[4];
+static int s_vibHandlesCount = 0;
 static bool s_hasVib = false;
+static int konami_step = 0;
 
 // --- LOCAL BGM DISCOVERY ---
 char g_local_bgms[32][64];
@@ -384,11 +387,18 @@ int main(int argc, char **argv) {
     PadState pad;
     padInitializeDefault(&pad);
 
-    if (R_SUCCEEDED(hidInitializeVibrationDevices(s_vibHandles, 2, HidNpadIdType_No1, HidNpadStyleTag_NpadJoyDual))) {
-        s_hasVib = true;
-    } else if (R_SUCCEEDED(hidInitializeVibrationDevices(s_vibHandles, 2, HidNpadIdType_Handheld, HidNpadStyleTag_NpadHandheld))) {
-        s_hasVib = true;
+    hidPermitVibration(true);
+    s_vibHandlesCount = 0;
+    HidVibrationDeviceHandle v_handles[2];
+    if (R_SUCCEEDED(hidInitializeVibrationDevices(v_handles, 2, HidNpadIdType_No1, HidNpadStyleSet_NpadStandard))) {
+        s_vibHandles[s_vibHandlesCount++] = v_handles[0];
+        s_vibHandles[s_vibHandlesCount++] = v_handles[1];
     }
+    if (R_SUCCEEDED(hidInitializeVibrationDevices(v_handles, 2, HidNpadIdType_Handheld, HidNpadStyleTag_NpadHandheld))) {
+        s_vibHandles[s_vibHandlesCount++] = v_handles[0];
+        s_vibHandles[s_vibHandlesCount++] = v_handles[1];
+    }
+    s_hasVib = (s_vibHandlesCount > 0);
 
     if (!ui_init()) {
         audio_exit();
@@ -502,13 +512,17 @@ int main(int argc, char **argv) {
 
         if (s_hasVib) {
             if (g_major_shake > 0) {
-                HidVibrationValue v = { .amp_low = 0.9f, .freq_low = 140.0f, .amp_high = 0.9f, .freq_high = 280.0f };
-                hidSendVibrationValue(s_vibHandles[0], &v);
-                hidSendVibrationValue(s_vibHandles[1], &v);
+                HidVibrationValue v_vals[4];
+                for (int vi = 0; vi < s_vibHandlesCount; vi++) {
+                    v_vals[vi].amp_low = 0.9f;
+                    v_vals[vi].freq_low = 140.0f;
+                    v_vals[vi].amp_high = 0.9f;
+                    v_vals[vi].freq_high = 280.0f;
+                }
+                hidSendVibrationValues(s_vibHandles, v_vals, s_vibHandlesCount);
             } else {
-                HidVibrationValue v_stop = { 0 };
-                hidSendVibrationValue(s_vibHandles[0], &v_stop);
-                hidSendVibrationValue(s_vibHandles[1], &v_stop);
+                HidVibrationValue v_stop[4] = { {0} };
+                hidSendVibrationValues(s_vibHandles, v_stop, s_vibHandlesCount);
             }
         }
         // Une seule fois : prouve que la boucle tourne ET que l'entree remonte (si A ne fait rien
@@ -535,9 +549,15 @@ int main(int argc, char **argv) {
                 } else {
                     if (k & (HidNpadButton_AnyLeft | HidNpadButton_AnyRight | HidNpadButton_AnyUp | HidNpadButton_AnyDown)) {
                         if (k & (HidNpadButton_AnyUp | HidNpadButton_AnyLeft)) {
-                            focus = (focus == FOCUS_MODE) ? FOCUS_CALL : (focus == FOCUS_CALL ? FOCUS_S2 : FOCUS_MODE);
+                            if (focus == FOCUS_MODE) focus = FOCUS_PLUS18;
+                            else if (focus == FOCUS_PLUS18) focus = FOCUS_CALL;
+                            else if (focus == FOCUS_CALL) focus = FOCUS_S2;
+                            else focus = FOCUS_MODE;
                         } else {
-                            focus = (focus == FOCUS_MODE) ? FOCUS_S2 : (focus == FOCUS_S2 ? FOCUS_CALL : FOCUS_MODE);
+                            if (focus == FOCUS_MODE) focus = FOCUS_S2;
+                            else if (focus == FOCUS_S2) focus = FOCUS_CALL;
+                            else if (focus == FOCUS_CALL) focus = FOCUS_PLUS18;
+                            else focus = FOCUS_MODE;
                         }
                         status[0] = 0;
                     }
@@ -552,6 +572,8 @@ int main(int argc, char **argv) {
                             screen = SCREEN_NINTENDO_COMING;
                             nintendo_distance = 9000;
                             nintendo_in_meters = false;
+                        } else if (focus == FOCUS_PLUS18) {
+                            screen = SCREEN_PLUS18_WARN1;
                         }
                     }
                 }
@@ -716,6 +738,57 @@ int main(int argc, char **argv) {
                 break; // Exit app on any button press
             }
             ui_draw_fake_ban();
+
+        } else if (screen == SCREEN_PLUS18_WARN1) {
+            g_major_shake = 0;
+            if (k & HidNpadButton_B) {
+                screen = SCREEN_PICKER;
+            } else if (k & HidNpadButton_A) {
+                screen = SCREEN_PLUS18_WARN2;
+            }
+            ui_draw_plus18_warn1();
+
+        } else if (screen == SCREEN_PLUS18_WARN2) {
+            g_major_shake = 0;
+            // Commande inversée voulue par l'utilisateur : B = continuer, A = revenir en arrière
+            if (k & HidNpadButton_A) {
+                screen = SCREEN_PICKER;
+            } else if (k & HidNpadButton_B) {
+                screen = SCREEN_PLUS18_KONAMI;
+                konami_step = 0;
+            }
+            ui_draw_plus18_warn2();
+
+        } else if (screen == SCREEN_PLUS18_KONAMI) {
+            g_major_shake = 0;
+            if (k & (HidNpadButton_B | HidNpadButton_Plus)) {
+                screen = SCREEN_PICKER;
+            } else if (k & (HidNpadButton_AnyUp | HidNpadButton_AnyDown | HidNpadButton_AnyLeft | HidNpadButton_AnyRight)) {
+                u64 seq[6] = { HidNpadButton_AnyUp, HidNpadButton_AnyUp, HidNpadButton_AnyDown, HidNpadButton_AnyDown, HidNpadButton_AnyLeft, HidNpadButton_AnyRight };
+                if (k & seq[konami_step]) {
+                    konami_step++;
+                    if (konami_step >= 6) {
+                        screen = SCREEN_RICKROLL;
+                        playing_song_idx = -1;
+                        audio_play_rickroll();
+                    }
+                } else {
+                    konami_step = 0;
+                }
+            }
+            if (screen == SCREEN_PLUS18_KONAMI) {
+                ui_draw_plus18_konami(konami_step);
+            }
+
+        } else if (screen == SCREEN_RICKROLL) {
+            g_major_shake = 0;
+            if (k & (HidNpadButton_B | HidNpadButton_Plus)) {
+                audio_resume_current_bgm();
+                screen = SCREEN_PICKER;
+            }
+            if (screen == SCREEN_RICKROLL) {
+                ui_draw_rickroll();
+            }
 
         } else if (screen == SCREEN_BGM_MENU) {
             g_major_shake = 0;

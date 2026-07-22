@@ -33,6 +33,8 @@ void audio_resume(void);
 bool audio_is_paused(void);
 bool audio_is_playing(void);
 void audio_play_sfx(void); // joue le sfx1.mp3 de panique
+void audio_play_rickroll(void); // joue RickRoll.mp3 en boucle
+void audio_resume_current_bgm(void); // relance le BGM courant
 void audio_exit(void);   // arrete + libere
 
 #endif // AUDIO_H

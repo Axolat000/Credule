@@ -59,9 +59,22 @@ typedef struct {
     int duration;
 } Song;
 
+enum {
+    FOCUS_MODE = 0,
+    FOCUS_CALL = 1,
+    FOCUS_S2   = 2,
+    FOCUS_PLUS18 = 3
+};
+
 void ui_draw_bgm_menu(int selected, int scroll_y, int playing_idx);
 void ui_draw_nintendo_coming(int distance, bool inMeters);
 void ui_draw_fake_ban(void);
+
+void ui_draw_plus18_warn1(void);
+void ui_draw_plus18_warn2(void);
+void ui_draw_plus18_konami(int step);
+void ui_draw_rickroll(void);
+void ui_free_rickroll(void);
 
 extern int g_major_shake;
 

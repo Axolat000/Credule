@@ -32,6 +32,13 @@
 #include "nextendo_apply.h"
 #include "lang.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#define STBI_ONLY_JPEG
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#pragma GCC diagnostic pop
+
 #define IMG 200                 // taille des .rgba (200x200)
 #define IMG_BYTES (IMG * IMG * 4)
 
@@ -236,6 +243,7 @@ bool ui_init(void) {
 }
 
 void ui_exit(void) {
+    ui_free_rickroll();
     framebufferClose(&s_fb);
     if (s_logo) free(s_logo);
     if (s_ninten) free(s_ninten);
@@ -322,17 +330,31 @@ void ui_draw_picker(int selection, int current, int focus, const char *status, i
               packColor(current == CHOICE_NEXTENDO ? C_BLUE : C_RED), md);
     }
 
-    // Call Nintendo Bar
+    // Call Nintendo Bar (Top Right, non-overlapping)
     bool callFocused = (focus == FOCUS_CALL);
-    int callBarX = (FB_W - 400) / 2 + shX;
-    int callBarY = 20 + shY;
+    int callBarW = 220, callBarH = 46;
+    int callBarX = FB_W - callBarW - 40 + shX;
+    int callBarY = 25 + shY;
     if (callFocused)
-        roundedCard(b, st, callBarX - 4, callBarY - 4, 400 + 8, 50 + 8, 16, packColor(C_RED));
-    roundedCard(b, st, callBarX, callBarY, 400, 50, 12,
+        roundedCard(b, st, callBarX - 4, callBarY - 4, callBarW + 8, callBarH + 8, 16, packColor(C_RED));
+    roundedCard(b, st, callBarX, callBarY, callBarW, callBarH, 12,
                 packColor(callFocused ? C_CARD_SEL : C_CARD));
-    drawCF(b, st, s_semi, FB_W / 2 + shX, callBarY + 34, 22,
+    drawCF(b, st, s_semi, callBarX + callBarW / 2, callBarY + 31, 19,
            packColor(callFocused ? C_TITLE : C_SUBTLE),
            "CALL NINTENDO");
+
+    // +18 Button (Top Left, non-overlapping)
+    bool plus18Focused = (focus == FOCUS_PLUS18);
+    int p18W = 120, p18H = 46;
+    int p18X = 40 + shX;
+    int p18Y = 25 + shY;
+    if (plus18Focused)
+        roundedCard(b, st, p18X - 4, p18Y - 4, p18W + 8, p18H + 8, 16, packColor(C_RED));
+    roundedCard(b, st, p18X, p18Y, p18W, p18H, 12,
+                packColor(plus18Focused ? C_CARD_SEL : C_CARD));
+    drawCF(b, st, s_bold, p18X + p18W / 2, p18Y + 31, 20,
+           packColor(plus18Focused ? C_RED : C_TITLE),
+           lang_str(STR_PLUS18_BTN));
 
     bool modeFocus = (focus == FOCUS_MODE);
     drawCard(b, st, CARD0_X, modeFocus && selection == CHOICE_NEXTENDO, current == CHOICE_NEXTENDO, CHOICE_NEXTENDO);
@@ -344,6 +366,9 @@ void ui_draw_picker(int selection, int current, int focus, const char *status, i
     if (focus == FOCUS_CALL) {
         drawCF(b, st, s_reg, FB_W / 2 + shX, cy + shY, 21, packColor(C_SUBTLE),
                "Direct hotline to Nintendo Legal Department.");
+    } else if (focus == FOCUS_PLUS18) {
+        drawCF(b, st, s_reg, FB_W / 2 + shX, cy + shY, 21, packColor(C_RED),
+               lang_str(STR_PLUS18_DESC));
     } else if (focus == FOCUS_S2) {
         drawCF(b, st, s_reg, FB_W / 2 + shX, cy + shY, 21, packColor(C_SUBTLE),
                lang_str(STR_DESC_S2));
@@ -357,7 +382,8 @@ void ui_draw_picker(int selection, int current, int focus, const char *status, i
 
     drawCF(b, st, s_reg, FB_W / 2 + shX, FB_H - 50 + shY, 21, packColor(C_SUBTLE),
            focus == FOCUS_CALL ? "A: CALL NOW       L: Music       B: quit" :
-           (focus == FOCUS_S2 ? lang_str(STR_HELP_S2) : lang_str(STR_HELP_MODE)));
+           (focus == FOCUS_PLUS18 ? lang_str(STR_PLUS18_HELP) :
+           (focus == FOCUS_S2 ? lang_str(STR_HELP_S2) : lang_str(STR_HELP_MODE))));
     if (status && status[0])
         drawCF(b, st, s_semi, FB_W / 2 + shX, FB_H - 22 + shY, 23, packColor(C_BLUE), status);
 
@@ -686,5 +712,157 @@ void ui_draw_bgm_menu(int selected, int scroll_y, int playing_idx) {
     drawCF(b, st, s_reg, cx, cyy + ch - 30, 18, packColor(C_SUBTLE), "UP/DOWN: Scroll       A: Select       B: Back");
 
     framebufferEnd(&s_fb);
+}
+
+void ui_draw_plus18_warn1(void) {
+    u32 st;
+    u32 *b = (u32 *)framebufferBegin(&s_fb, &st);
+    clearScreenPsychedelic(b, st);
+
+    int cw = 880, ch = 480;
+    int cx = (FB_W - cw) / 2, cy = (FB_H - ch) / 2;
+    roundedCard(b, st, cx - 4, cy - 4, cw + 8, ch + 8, 28, packColor(C_RED));
+    roundedCard(b, st, cx, cy, cw, ch, 24, packColor(C_CARD));
+
+    drawCF(b, st, s_bold, FB_W / 2, cy + 65, 36, packColor(C_RED), lang_str(STR_PLUS18_W1_TITLE));
+
+    drawCF(b, st, s_reg, FB_W / 2, cy + 150, 22, packColor(C_TITLE), lang_str(STR_PLUS18_W1_LINE1));
+    drawCF(b, st, s_reg, FB_W / 2, cy + 195, 20, packColor(C_SUBTLE), lang_str(STR_PLUS18_W1_LINE2));
+    drawCF(b, st, s_reg, FB_W / 2, cy + 240, 20, packColor(C_SUBTLE), lang_str(STR_PLUS18_W1_LINE3));
+
+    int btnW = 340, btnH = 60;
+    roundedCard(b, st, cx + 60, cy + ch - 100, btnW, btnH, 14, packColor(C_CARD_SEL));
+    drawCF(b, st, s_bold, cx + 60 + btnW / 2, cy + ch - 60, 22, packColor(C_GREEN), lang_str(STR_PLUS18_W1_B));
+
+    roundedCard(b, st, cx + cw - 60 - btnW, cy + ch - 100, btnW, btnH, 14, packColor(C_CARD_SEL));
+    drawCF(b, st, s_bold, cx + cw - 60 - btnW / 2, cy + ch - 60, 22, packColor(C_RED), lang_str(STR_PLUS18_W1_A));
+
+    framebufferEnd(&s_fb);
+}
+
+void ui_draw_plus18_warn2(void) {
+    u32 st;
+    u32 *b = (u32 *)framebufferBegin(&s_fb, &st);
+    clearScreenPsychedelic(b, st);
+
+    int cw = 880, ch = 480;
+    int cx = (FB_W - cw) / 2, cy = (FB_H - ch) / 2;
+    roundedCard(b, st, cx - 4, cy - 4, cw + 8, ch + 8, 28, packColor(C_RED));
+    roundedCard(b, st, cx, cy, cw, ch, 24, packColor(C_CARD));
+
+    drawCF(b, st, s_bold, FB_W / 2, cy + 65, 36, packColor(C_RED), lang_str(STR_PLUS18_W2_TITLE));
+
+    drawCF(b, st, s_reg, FB_W / 2, cy + 150, 24, packColor(C_TITLE), lang_str(STR_PLUS18_W2_LINE1));
+    drawCF(b, st, s_reg, FB_W / 2, cy + 200, 20, packColor(C_SUBTLE), lang_str(STR_PLUS18_W2_LINE2));
+    drawCF(b, st, s_reg, FB_W / 2, cy + 245, 20, packColor(C_SUBTLE), lang_str(STR_PLUS18_W2_LINE3));
+
+    int btnW = 340, btnH = 60;
+    roundedCard(b, st, cx + 60, cy + ch - 100, btnW, btnH, 14, packColor(C_CARD_SEL));
+    drawCF(b, st, s_bold, cx + 60 + btnW / 2, cy + ch - 60, 22, packColor(C_RED), lang_str(STR_PLUS18_W2_B));
+
+    roundedCard(b, st, cx + cw - 60 - btnW, cy + ch - 100, btnW, btnH, 14, packColor(C_CARD_SEL));
+    drawCF(b, st, s_bold, cx + cw - 60 - btnW / 2, cy + ch - 60, 22, packColor(C_GREEN), lang_str(STR_PLUS18_W2_A));
+
+    framebufferEnd(&s_fb);
+}
+
+void ui_draw_plus18_konami(int step) {
+    u32 st;
+    u32 *b = (u32 *)framebufferBegin(&s_fb, &st);
+    clearScreenPsychedelic(b, st);
+
+    int cw = 940, ch = 480;
+    int cx = (FB_W - cw) / 2, cy = (FB_H - ch) / 2;
+    roundedCard(b, st, cx - 4, cy - 4, cw + 8, ch + 8, 28, packColor(C_BLUE));
+    roundedCard(b, st, cx, cy, cw, ch, 24, packColor(C_CARD));
+
+    drawCF(b, st, s_bold, FB_W / 2, cy + 65, 34, packColor(C_TITLE), lang_str(STR_PLUS18_KONAMI_TITLE));
+    drawCF(b, st, s_reg, FB_W / 2, cy + 130, 22, packColor(C_SUBTLE), lang_str(STR_PLUS18_KONAMI_DESC));
+    drawCF(b, st, s_bold, FB_W / 2, cy + 175, 24, packColor(C_BLUE), lang_str(STR_PLUS18_KONAMI_KEYS));
+
+    const char *labels[6] = {
+        lang_str(STR_PLUS18_K_UP), lang_str(STR_PLUS18_K_UP),
+        lang_str(STR_PLUS18_K_DOWN), lang_str(STR_PLUS18_K_DOWN),
+        lang_str(STR_PLUS18_K_LEFT), lang_str(STR_PLUS18_K_RIGHT)
+    };
+    int boxW = 130, boxH = 65, spacing = 15;
+    int totalW = (6 * boxW) + (5 * spacing);
+    int startX = (FB_W - totalW) / 2;
+    int boxY = cy + 245;
+
+    for (int i = 0; i < 6; i++) {
+        int bx = startX + i * (boxW + spacing);
+        bool done = (i < step);
+        bool isCurrent = (i == step);
+
+        u32 borderColor = done ? packColor(C_GREEN) : (isCurrent ? packColor(C_TITLE) : packColor(C_SUBTLE));
+        u32 bgColor = done ? packColor(C_CARD_SEL) : packColor(C_CARD);
+
+        roundedCard(b, st, bx - 2, boxY - 2, boxW + 4, boxH + 4, 10, borderColor);
+        roundedCard(b, st, bx, boxY, boxW, boxH, 8, bgColor);
+        drawCF(b, st, s_bold, bx + boxW / 2, boxY + 40, 16, borderColor, labels[i]);
+    }
+
+    drawCF(b, st, s_reg, FB_W / 2, cy + ch - 40, 18, packColor(C_SUBTLE), lang_str(STR_PLUS18_KONAMI_B));
+
+    framebufferEnd(&s_fb);
+}
+
+static u8 *s_rickroll_pixels = NULL;
+static int s_rickroll_w = 0, s_rickroll_h = 0;
+
+void ui_draw_rickroll(void) {
+    if (!s_rickroll_pixels) {
+        int channels;
+        s_rickroll_pixels = stbi_load("romfs:/Rickroll.jpg", &s_rickroll_w, &s_rickroll_h, &channels, 4);
+    }
+
+    u32 st;
+    u32 *b = (u32 *)framebufferBegin(&s_fb, &st);
+    clearScreenPsychedelic(b, st);
+
+    if (s_rickroll_pixels && s_rickroll_w > 0 && s_rickroll_h > 0) {
+        int draw_w = s_rickroll_w;
+        int draw_h = s_rickroll_h;
+        if (draw_w > FB_W - 80) {
+            float aspect = (float)s_rickroll_h / (float)s_rickroll_w;
+            draw_w = FB_W - 80;
+            draw_h = (int)(draw_w * aspect);
+        }
+        if (draw_h > FB_H - 120) {
+            float aspect = (float)s_rickroll_w / (float)s_rickroll_h;
+            draw_h = FB_H - 120;
+            draw_w = (int)(draw_h * aspect);
+        }
+
+        int start_x = (FB_W - draw_w) / 2;
+        int start_y = (FB_H - draw_h) / 2 - 20;
+
+        for (int y = 0; y < draw_h; y++) {
+            int src_y = y * s_rickroll_h / draw_h;
+            for (int x = 0; x < draw_w; x++) {
+                int src_x = x * s_rickroll_w / draw_w;
+                int src_idx = (src_y * s_rickroll_w + src_x) * 4;
+                u8 r = s_rickroll_pixels[src_idx];
+                u8 g = s_rickroll_pixels[src_idx + 1];
+                u8 b_val = s_rickroll_pixels[src_idx + 2];
+                u8 a = s_rickroll_pixels[src_idx + 3];
+
+                putPixel(b, st, start_x + x, start_y + y, RGBA8(r, g, b_val, a));
+            }
+        }
+    }
+
+    drawCF(b, st, s_bold, FB_W / 2, FB_H - 45, 24, packColor(C_RED), lang_str(STR_RICKROLL_TITLE));
+    drawCF(b, st, s_reg, FB_W / 2, FB_H - 18, 18, packColor(C_SUBTLE), lang_str(STR_RICKROLL_SUB));
+
+    framebufferEnd(&s_fb);
+}
+
+void ui_free_rickroll(void) {
+    if (s_rickroll_pixels) {
+        stbi_image_free(s_rickroll_pixels);
+        s_rickroll_pixels = NULL;
+    }
 }
 
